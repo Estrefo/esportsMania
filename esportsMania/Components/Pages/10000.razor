@@ -1,0 +1,239 @@
+﻿@page "/10000"
+@using esportsMania.Models
+@inject esportsMania.Services.JugadoresService JugadoresService
+@rendermode InteractiveServer
+
+<PageTitle>Jugador Aleatorio</PageTitle>
+
+<h1 class="text-primary text-center mb-2">Jugador Aleatorio</h1>
+
+<!-- PUNTUACIÓN SIEMPRE VISIBLE -->
+<div class="text-center mb-4">
+    <h4>Puntuación total: @CalcularPuntuacion()</h4>
+</div>
+
+@if (cargando)
+{
+    <p class="text-center">Cargando jugadores...</p>
+}
+else if (!TodosAsignados())
+{
+    if (jugadorActual is not null)
+    {
+        <div class="d-flex flex-column align-items-center">
+            <div style="width: 100px; height: 150px;">
+                <img src="@jugadorActual.FotoJugador" class="card-img-top" alt="@jugadorActual.Nombre" style="width: 100px; height: 100px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title text-center">@jugadorActual.Nombre</h5>
+                </div>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="d-flex flex-column gap-2 mt-3" style="max-width: 250px; width: 100%;">
+                @for (int i = 0; i < botonesInfo.Count; i++)
+                {
+                    var indice = i;
+                    var boton = botonesInfo[i];
+                    <button class="btn btn-outline-primary btn-sm w-100 text-start"
+                            @onclick="() => AsignarJugador(indice)"
+                            disabled="@boton.Asignado">
+                        @boton.Texto
+                    </button>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <!-- TODOS ASIGNADOS -->
+    <div class="d-flex justify-content-center">
+        <div class="d-flex flex-column gap-2" style="width: 100%; max-width: 300px;">
+            @for (int i = 0; i < botonesInfo.Count; i++)
+            {
+                var indice = i;
+                var boton = botonesInfo[i];
+                <button class="btn btn-outline-primary btn-sm w-100 text-start"
+                        @onclick="() => AsignarJugador(indice)"
+                        disabled="@boton.Asignado || ruletaActiva">
+                    @boton.Texto
+                </button>
+            }
+        </div>
+    </div>
+}
+
+
+@code {
+    private Jugadores? jugadorActual;
+    private List<Jugadores> jugadores = new();
+    private Random random = new();
+    private List<BotonInfo> botonesInfo = new();
+    private bool ruletaActiva = true;
+    private bool cargando = true;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        if (firstRender)
+        {
+            await Inicializar();
+        }
+    }
+
+    private async Task Inicializar()
+    {
+        
+
+        cargando = true;
+        StateHasChanged();
+
+        jugadores = (await JugadoresService.GetAllAsync())
+            .Where(j => j.IdJuegoNavigation.IdJuego == 1)
+            .ToList();
+
+        botonesInfo = new List<BotonInfo>
+    {
+        new BotonInfo("Kills", "Kills:"),
+        new BotonInfo("Kills x2", "Kills x2:"),
+        new BotonInfo("Muertes", "Muertes:"),
+        new BotonInfo("Muertes x2", "Muertes x2:"),
+        new BotonInfo("Asistencias", "Asistencias:"),
+        new BotonInfo("Asistencias x2", "Asistencias x2:"),
+        new BotonInfo("Descarte", "Descarte:")
+    };
+
+        if (jugadores.Count > 0)
+        {
+            jugadorActual = jugadores[random.Next(jugadores.Count)];
+        }
+
+        ruletaActiva = true;
+        cargando = false;
+        StateHasChanged(); // actualiza ahora que todo está listo
+        await Task.Yield();
+
+        await SimularRuletaAsync();
+    }
+
+
+    private async Task SimularRuletaAsync()
+    {
+        var startTime = DateTime.Now;
+
+        while ((DateTime.Now - startTime).TotalMilliseconds < 1000 && !TodosAsignados())
+        {
+            jugadorActual = jugadores[random.Next(jugadores.Count)];
+            StateHasChanged();
+            await Task.Delay(100);
+        }
+
+        if (!TodosAsignados() && jugadores.Count > 0)
+        {
+            jugadorActual = jugadores[random.Next(jugadores.Count)];
+            StateHasChanged();
+        }
+
+        //Esperar 500ms adicionales antes de permitir interacciones
+        await Task.Delay(400);
+
+        ruletaActiva = false;
+        StateHasChanged();
+    }
+
+    private void AsignarJugador(int indiceBoton)
+    {
+        if (ruletaActiva)
+            return; // Bloquear interacción mientras ruleta está activa
+
+        if (indiceBoton < 0 || indiceBoton >= botonesInfo.Count)
+            return;
+
+        if (jugadorActual == null)
+            return;
+
+        var boton = botonesInfo[indiceBoton];
+        if (boton.Asignado)
+            return;
+
+        int valor = 0;
+        string nombreJugador = jugadorActual.Nombre;
+
+        switch (boton.TextoBase)
+        {
+            case "Kills":
+                valor = jugadorActual.Kills;
+                break;
+            case "Kills x2":
+                valor = jugadorActual.Kills * 2;
+                break;
+            case "Muertes":
+                valor = jugadorActual.Muertes;
+                break;
+            case "Muertes x2":
+                valor = jugadorActual.Muertes * 2;
+                break;
+            case "Asistencias":
+                valor = jugadorActual.Asistencias;
+                break;
+            case "Asistencias x2":
+                valor = jugadorActual.Asistencias * 2;
+                break;
+            case "Descarte":
+                valor = 0;
+                break;
+        }
+
+        boton.Texto = boton.TextoBase + ": " + nombreJugador + (boton.TextoBase == "Descarte" ? "" : " " + valor);
+        boton.Asignado = true;
+
+        botonesInfo[indiceBoton] = boton;
+
+        // Generar nuevo jugador
+        if (!TodosAsignados())
+            jugadorActual = jugadores[random.Next(jugadores.Count)];
+        else
+            jugadorActual = null; // Ya no hay más jugadores que mostrar
+
+        StateHasChanged();
+    }
+
+    private bool TodosAsignados() => botonesInfo.All(b => b.Asignado);
+
+    // Ahora BotonInfo es clase para poder modificar propiedades
+    private class BotonInfo
+    {
+        public string TextoBase { get; set; }
+        public string Texto { get; set; }
+        public bool Asignado { get; set; }
+
+        public BotonInfo(string textoBase, string texto)
+        {
+            TextoBase = textoBase;
+            Texto = texto;
+            Asignado = false;
+        }
+    }
+
+    private int CalcularPuntuacion()
+    {
+        int suma = 0;
+
+        foreach (var boton in botonesInfo)
+        {
+            if (boton.Asignado && boton.TextoBase != "Descarte")
+            {
+                // Extraer valor al final del texto
+                // Ejemplo: "Kills: Faker 6000"
+                var partes = boton.Texto.Split(' ');
+                if (partes.Length >= 3 && int.TryParse(partes.Last(), out int valor))
+                {
+                    suma += valor;
+                }
+            }
+        }
+
+        return suma;
+    }
+}
