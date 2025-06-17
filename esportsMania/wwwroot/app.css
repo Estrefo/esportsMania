@@ -5,6 +5,7 @@ html, body {
     padding: 0;
     background: radial-gradient(circle at center, #001f3f, #000814);
     color: #e0e0e0;
+    overflow-x: hidden;
 }
 
 body {
@@ -171,20 +172,20 @@ h1:focus {
 
 /* Botón con efecto neón */
 .neon-btn {
-    background-color: #00f0ff;
+    background-color: #00ccff; /* rosa fuerte */
     border-color: #00ccff;
-    color: #001f3f;
+    color: #ffffff;
     font-weight: bold;
-    text-shadow: none;
-    box-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+    text-shadow: 0 0 5px #00ccff, 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+    box-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-    .neon-btn:hover {
-        background-color: #00ccff;
-        box-shadow: 0 0 20px #00ccff, 0 0 30px #00ccff;
-        color: #001f3f;
-    }
+.neon-btn:hover {
+    background-color: #ff33ff;
+    box-shadow: 0 0 20px #ff33ff, 0 0 30px #ff33ff;
+    color: #ffffff;
+}
 
 .fixed-footer {
     position: fixed;
@@ -211,7 +212,28 @@ h1:focus {
             text-shadow: 0 0 8px #00f0ff, 0 0 15px #00f0ff;
         }
 
-.content {
-    padding-top: 1.1rem;
-    margin-bottom: 3rem; /* solo si necesitas espacio visual entre contenido y footer */
+.btn-outline-primary {
+    color: #ffffff;
+    border-color: #ffffff;
+    text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff;
+    box-shadow: 0 0 5px #ffffff;
+    background-color: transparent;
+    transition: all 0.3s ease;
 }
+
+    .btn-outline-primary:hover,
+    .btn-outline-primary:focus,
+    .btn-outline-primary:active {
+        color: #000814; /* fondo oscuro de tu página */
+        background-color: #ffffff;
+        border-color: #ffffff;
+        box-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff;
+    }
+    .btn-outline-primary:disabled {
+        color: #ffffff !important;
+        border-color: #ffffff !important;
+        background-color: transparent !important;
+        text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff !important;
+        box-shadow: 0 0 5px #ffffff !important;
+        opacity: 1 !important;
+    }

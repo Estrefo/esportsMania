@@ -48,5 +48,14 @@ namespace esportsMania.Services
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task<List<Ganadores>> GetTopAsync(int topCount, int juegoId)
+        {
+            return await _context.Ganadores
+                .Include(g => g.IdJuegoNavigation)
+                .Where(g => g.IdJuegoNavigation.IdJuego == juegoId)
+                .OrderByDescending(g => g.Puntos)
+                .Take(topCount)
+                .ToListAsync();
+        }
     }
 }
