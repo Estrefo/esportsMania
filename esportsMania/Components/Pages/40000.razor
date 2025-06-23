@@ -18,8 +18,6 @@
 {
     <p class="text-center">Cargando jugadores...</p>
 }
-else if (!TodosAsignados())
-{
     <div class="d-flex gap-3">
         <!-- Columna izquierda: Tabla de ganadores -->
         <div style="width: 250px;" class="d-flex flex-column align-items-center">
@@ -78,6 +76,41 @@ else if (!TodosAsignados())
                         </button>
                     }
                 </div>
+
+            }
+            @if (TodosAsignados() && !cargando)
+            {
+                <div class="text-center mt-4">
+                    @if (CalcularPuntuacion() >= 10000)
+                    {
+                        <h3 class="text-success mb-3">¡Victoria! Has superado los 40000 puntos 🎉</h3>
+
+                        @if (!ganadorGuardado)
+                        {
+                            <div class="mb-3">
+                                <label for="nombreGanador" class="form-label">Introduce tu nombre:</label>
+                                <input type="text" id="nombreGanador" class="input-como-boton mb-2" style="width: 300px;" @bind="nombreGanador" maxlength="25" />
+                                <button class="btn btn-primary" @onclick="GuardarGanador" disabled="@string.IsNullOrWhiteSpace(nombreGanador)">
+                                    Guardar Ganador
+                                </button>
+                                @if (!string.IsNullOrEmpty(mensajeErrorNombre))
+                                {
+                                    <div class="text-danger mb-2">@mensajeErrorNombre</div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <h5 class="text-success">¡Tu puntuación ha sido guardada!</h5>
+                            <button class="btn btn-secondary mt-2" @onclick="RefrescarPagina">Jugar de nuevo</button>
+                        }
+                    }
+                    else
+                    {
+                        <h3 class="text-danger mb-3">No has alcanzado los 40000 puntos 😢</h3>
+                        <button class="btn btn-secondary" @onclick="RefrescarPagina">Reintentar</button>
+                    }
+                </div>
             }
         </div>
 
@@ -98,7 +131,7 @@ else if (!TodosAsignados())
             </script>
         </div>
     </div>
-}
+
 
 
 @code {
@@ -110,13 +143,16 @@ else if (!TodosAsignados())
     private bool ruletaActiva = true;
     private bool cargando = true;
     private List<Ganadores> topGanadores = new();
+    private string nombreGanador = string.Empty;
+    private bool ganadorGuardado = false;
+    private string mensajeErrorNombre = string.Empty;
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             await Inicializar();
-            await CargarGanadores();
         }
     }
 
@@ -124,6 +160,8 @@ else if (!TodosAsignados())
     {
         cargando = true;
         StateHasChanged();
+
+        await CargarGanadores();
 
         jugadores = (await JugadoresService.GetAllAsync())
             .Where(j => j.IdJuegoNavigation.IdJuego == 1)
@@ -243,10 +281,6 @@ else if (!TodosAsignados())
         {
             jugadorActual = jugadoresDisponibles[random.Next(jugadoresDisponibles.Count)];
         }
-        else
-        {
-            jugadorActual = null;
-        }
 
         StateHasChanged();
     }
@@ -290,4 +324,32 @@ else if (!TodosAsignados())
     {
         NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
     }
+
+    private async Task GuardarGanador()
+    {
+        mensajeErrorNombre = string.Empty;
+
+        var existeNombre = await GanadoresService.ExisteNombreGanadorAsync(nombreGanador);
+        if (existeNombre)
+        {
+            mensajeErrorNombre = "El nombre ya existe. Por favor, elige otro.";
+            return;
+        }
+
+        var ganador = new Ganadores
+            {
+                NombreGanador = nombreGanador,
+                Puntos = CalcularPuntuacion(),
+                IdJuego = 1  // Asocias el juego con IdJuego = 1
+            };
+
+        await GanadoresService.AddAsync(ganador);
+
+        ganadorGuardado = true;
+        await CargarGanadores();  // Recarga la lista de ganadores para mostrar el nuevo
+        StateHasChanged();
+    }
+
+
+    
 }

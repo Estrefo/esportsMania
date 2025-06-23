@@ -29,6 +29,16 @@ namespace esportsMania.Services
 
         public async Task AddAsync(Ganadores ganador)
         {
+            // Cargar el juego existente para evitar problemas de tracking
+            var juegoExistente = await _context.Juegos.FindAsync(ganador.IdJuego);
+
+            if (juegoExistente == null)
+                throw new InvalidOperationException("El juego especificado no existe.");
+
+            // Asignar la propiedad de navegación para EF Core
+            ganador.IdJuegoNavigation = juegoExistente;
+
+            // Añadir el ganador al contexto y guardar
             _context.Ganadores.Add(ganador);
             await _context.SaveChangesAsync();
         }
@@ -48,14 +58,17 @@ namespace esportsMania.Services
                 await _context.SaveChangesAsync();
             }
         }
-        public async Task<List<Ganadores>> GetTopAsync(int topCount, int juegoId)
+        public async Task<List<Ganadores>> GetTopAsync(int count, int juegoId)
         {
             return await _context.Ganadores
-                .Include(g => g.IdJuegoNavigation)
-                .Where(g => g.IdJuegoNavigation.IdJuego == juegoId)
+                .Where(g => g.IdJuego == juegoId)
                 .OrderByDescending(g => g.Puntos)
-                .Take(topCount)
+                .Take(count)
                 .ToListAsync();
+        }
+        public async Task<bool> ExisteNombreGanadorAsync(string nombre)
+        {
+            return await _context.Ganadores.AnyAsync(g => g.NombreGanador == nombre);
         }
     }
 }

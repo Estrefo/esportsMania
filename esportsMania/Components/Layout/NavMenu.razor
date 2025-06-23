@@ -1,12 +1,15 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand neon-brand" href="">ESPORTSMANIA</a>
+        <a class="navbar-brand" href="">
+            <img src="logo.png" alt="ESPORTSMANIA" style="height: 100px;">
+        </a>
     </div>
 </div>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<!-- Aquí aplicamos la clase sidebar -->
+<div class="nav-scrollable sidebar" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link neon-link" href="" Match="NavLinkMatch.All">
@@ -16,7 +19,8 @@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link neon-link" href="40000">
-                <span class="bi bi-plus-square-fill-nav-menu me-2" aria-hidden="true"></span> Reto LoL
+                <img src="LOL_Logo.png" alt="Reto LoL" style="height: 20px; width: 20px; margin-right: 8px;" />
+                Reto LoL
             </NavLink>
         </div>
 
@@ -27,4 +31,3 @@
         </div>
     </nav>
 </div>
-
